@@ -1,3 +1,5 @@
 import './config/env';
 
-console.log('Hello world');
+import app from './app';
+
+app.listen(process.env.APP_PORT);
