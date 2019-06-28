@@ -29,6 +29,40 @@ class UserController {
 
     return res.json({ id, name, email });
   }
+
+  async update(req, res) {
+    const schema = Yup.object().shape({
+      oldPassword: Yup.string()
+        .required()
+        .min(8),
+      password: Yup.string()
+        .required()
+        .min(8),
+      confirmPassword: Yup.string().when('password', (password, field) =>
+        password ? field.required().oneOf([Yup.ref('password')]) : field
+      ),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
+
+    const user = await User.findByPk(req.userId);
+
+    const { oldPassword } = req.body;
+
+    if (!user) {
+      return res.status(400).json({ error: 'User does not exists' });
+    }
+
+    if (!(await user.checkPassword(oldPassword))) {
+      return res.status(401).json({ error: 'Wrong password' });
+    }
+
+    const { id, name, email } = await user.update(req.body);
+
+    return res.json({ id, name, email });
+  }
 }
 
 export default new UserController();
