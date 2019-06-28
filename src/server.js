@@ -1,1 +1,3 @@
-console.log('starting');
+import './config/env';
+
+console.log('Hello world');
