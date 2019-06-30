@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { isBefore, parseISO } from 'date-fns';
 import Meetup from '../models/Meetup';
 
 class MeetupController {
@@ -16,6 +17,10 @@ class MeetupController {
 
     const { name, description, locale, date } = req.body;
 
+    if (isBefore(parseISO(date), new Date())) {
+      return res.status(400).json({ error: 'Past dates are not permitted' });
+    }
+
     const meetup = await Meetup.create({
       name,
       description,
@@ -25,10 +30,6 @@ class MeetupController {
     });
 
     return res.json(meetup);
-  }
-
-  static associate(models) {
-    this.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' });
   }
 }
 
