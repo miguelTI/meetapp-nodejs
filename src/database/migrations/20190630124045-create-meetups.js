@@ -31,7 +31,7 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
-        allowNull: true,
+        allowNull: false,
       },
       avatar_id: {
         type: Sequelize.INTEGER,
