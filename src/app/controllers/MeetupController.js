@@ -60,6 +60,35 @@ class MeetupController {
 
     return res.json({ message: 'Meetup canceled' });
   }
+
+  async update(req, res) {
+    const schema = Yup.object().shape({
+      name: Yup.string(),
+      description: Yup.string(),
+      locale: Yup.string(),
+      date: Yup.date(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
+
+    const meetup = await Meetup.findByPk(req.params.id);
+
+    if (!meetup) {
+      return res.status(400).json({ error: 'Meetup not found' });
+    }
+
+    if (meetup.user_id !== req.userId) {
+      return res.status(401).json({ error: 'Only authors can update meetups' });
+    }
+
+    await meetup.update(req.body, {
+      returning: true,
+    });
+
+    return res.json(meetup);
+  }
 }
 
 export default new MeetupController();
