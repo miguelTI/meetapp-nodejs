@@ -1,10 +1,32 @@
 import * as Yup from 'yup';
 import { isBefore } from 'date-fns';
+import { Op } from 'sequelize';
 
 import Attendance from '../models/Attendance';
 import Meetup from '../models/Meetup';
 
 class AttendanceController {
+  async index(req, res) {
+    const attendances = await Attendance.findAll({
+      where: {
+        user_id: req.userId,
+      },
+      include: [
+        {
+          model: Meetup,
+          as: 'meetup',
+          where: {
+            date: {
+              [Op.gte]: new Date(),
+            },
+          },
+        },
+      ],
+    });
+
+    return res.json(attendances);
+  }
+
   async store(req, res) {
     const schema = Yup.object().shape({
       meetup_id: Yup.number().required(),
