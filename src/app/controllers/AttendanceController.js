@@ -1,9 +1,12 @@
 import * as Yup from 'yup';
-import { isBefore } from 'date-fns';
+import { isBefore, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
 import { Op } from 'sequelize';
 
+import Mail from '../../lib/Mail';
 import Attendance from '../models/Attendance';
 import Meetup from '../models/Meetup';
+import User from '../models/User';
 
 class AttendanceController {
   async index(req, res) {
@@ -36,7 +39,14 @@ class AttendanceController {
       return res.status(400).json({ error: 'Validation failed' });
     }
 
-    const meetup = await Meetup.findByPk(req.body.meetup_id);
+    const meetup = await Meetup.findByPk(req.body.meetup_id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+        },
+      ],
+    });
 
     if (!meetup) {
       return res.status(400).json({ error: 'Meetup not found' });
@@ -86,9 +96,36 @@ class AttendanceController {
         .json({ error: 'You are already attending a meetup for that date' });
     }
 
-    const attendance = await Attendance.create({
+    const insertAttendance = await Attendance.create({
       user_id: req.userId,
       meetup_id: meetup.id,
+    });
+
+    const attendance = await Attendance.findByPk(insertAttendance.id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+        },
+        {
+          model: Meetup,
+          as: 'meetup',
+        },
+      ],
+    });
+
+    await Mail.sendMail({
+      to: `${meetup.user.name} <${meetup.user.email}>`,
+      subject: 'Uma pessoa vai no teu evento',
+      template: 'attendanceConfirmation',
+      context: {
+        author: meetup.user.name,
+        user: attendance.user.name,
+        name: meetup.name,
+        date: format(meetup.date, "'dia' dd 'de' MMMM', às' H:mm'h'", {
+          locale: pt,
+        }),
+      },
     });
 
     return res.json(attendance);
