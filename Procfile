@@ -1,2 +1,2 @@
 web: npm run start
-release: npm run migrate
+release: npx sequelize db:migrate

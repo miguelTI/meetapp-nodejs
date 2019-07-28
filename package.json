@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "build": "sucrase ./src -d ./dist --transforms imports",
-    "start": "npm run migrate && node dist/server.js",
+    "start": "node dist/server.js",
     "migrate": "dotenv sequelize db:migrate",
     "migrateback": "dotenv sequelize db:migrate:undo",
     "fix": "eslint --fix src --ext .js"
