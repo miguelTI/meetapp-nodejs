@@ -7,10 +7,13 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "build": "sucrase ./src -d ./dist --transforms imports",
-    "start": "node dist/server.js",
+    "start": "npm run migrate && node dist/server.js",
     "migrate": "dotenv sequelize db:migrate",
     "migrateback": "dotenv sequelize db:migrate:undo",
     "fix": "eslint --fix src --ext .js"
+  },
+  "engines": {
+    "node": "10.10.0"
   },
   "dependencies": {
     "@sentry/node": "5.5.0",
