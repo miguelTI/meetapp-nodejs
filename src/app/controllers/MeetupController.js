@@ -1,15 +1,29 @@
 import * as Yup from 'yup';
 import { isBefore, parseISO } from 'date-fns';
 import Meetup from '../models/Meetup';
+import File from '../models/File';
 
 class MeetupController {
   async index(req, res) {
-    const meetups = await Meetup.findAll({
-      where: { user_id: req.userId },
-      order: ['date'],
+    const meetup = await Meetup.findByPk(req.params.id, {
+      include: [
+        {
+          model: File,
+          as: 'avatar',
+          attributes: ['id', 'path', 'url'],
+        },
+      ],
     });
 
-    return res.json(meetups);
+    if (!meetup) {
+      return res.status(400).json({ error: 'Meetup not found' });
+    }
+
+    if (meetup.user_id !== req.userId) {
+      return res.status(401).json({ error: 'Only authors can view meetups' });
+    }
+
+    return res.json(meetup);
   }
 
   async store(req, res) {
@@ -24,18 +38,15 @@ class MeetupController {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const { name, description, locale, date } = req.body;
+    const { date } = req.body;
 
     if (isBefore(parseISO(date), new Date())) {
       return res.status(400).json({ error: 'Past dates are not permitted' });
     }
 
     const meetup = await Meetup.create({
-      name,
-      description,
-      locale,
-      date,
       user_id: req.userId,
+      ...req.body,
     });
 
     return res.json(meetup);

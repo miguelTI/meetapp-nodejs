@@ -17,7 +17,7 @@ class UserController {
       return res.status(400).json({ error: 'Bad request' });
     }
 
-    const existingUser = User.findOne({
+    const existingUser = await User.findOne({
       where: { email: req.body.email },
     });
 
