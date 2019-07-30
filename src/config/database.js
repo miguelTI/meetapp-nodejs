@@ -2,6 +2,7 @@ require('dotenv/config');
 
 const config = {
   dialect: process.env.DATABASE_DIALECT,
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
   define: {
     timestamps: true,
     underscored: true,
