@@ -10,7 +10,6 @@ const config = {
 };
 
 if (process.env.DATABASE_URL) {
-  console.log(`Connecting to database: ${process.env.DATABASE_URL}`);
   config.url = process.env.DATABASE_URL;
   config.dialectOptions = {
     ssl: true,
