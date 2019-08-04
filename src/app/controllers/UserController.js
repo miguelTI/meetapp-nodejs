@@ -32,12 +32,14 @@ class UserController {
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      oldPassword: Yup.string()
-        .required()
-        .min(8),
+      name: Yup.string(),
+      email: Yup.string().email(),
+      oldPassword: Yup.string().min(6),
       password: Yup.string()
-        .required()
-        .min(8),
+        .min(6)
+        .when('oldPassword', (oldPassword, field) =>
+          oldPassword ? field.required() : field
+        ),
       confirmPassword: Yup.string().when('password', (password, field) =>
         password ? field.required().oneOf([Yup.ref('password')]) : field
       ),
@@ -55,7 +57,7 @@ class UserController {
       return res.status(400).json({ error: 'User does not exists' });
     }
 
-    if (!(await user.checkPassword(oldPassword))) {
+    if (oldPassword && !(await user.checkPassword(oldPassword))) {
       return res.status(401).json({ error: 'Wrong password' });
     }
 

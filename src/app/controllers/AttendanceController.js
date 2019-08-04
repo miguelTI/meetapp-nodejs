@@ -7,21 +7,30 @@ import Mail from '../../lib/Mail';
 import Attendance from '../models/Attendance';
 import Meetup from '../models/Meetup';
 import User from '../models/User';
+import File from '../models/File';
 
 class AttendanceController {
   async index(req, res) {
-    const attendances = await Attendance.findAll({
-      where: {
-        user_id: req.userId,
-      },
+    const attendances = await Meetup.findAll({
+      order: [['date', 'ASC']],
       include: [
         {
-          model: Meetup,
-          as: 'meetup',
+          model: File,
+          as: 'avatar',
+          attributes: ['id', 'path', 'url'],
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name'],
+        },
+        {
+          model: Attendance,
+          required: true,
+          as: 'attendance',
+          attributes: ['id'],
           where: {
-            date: {
-              [Op.gte]: new Date(),
-            },
+            user_id: req.userId,
           },
         },
       ],
@@ -44,6 +53,7 @@ class AttendanceController {
         {
           model: User,
           as: 'user',
+          attributes: ['id'],
         },
       ],
     });
@@ -114,21 +124,45 @@ class AttendanceController {
       ],
     });
 
-    await Mail.sendMail({
-      to: `${meetup.user.name} <${meetup.user.email}>`,
-      subject: 'Uma pessoa vai no teu evento',
-      template: 'attendanceConfirmation',
-      context: {
-        author: meetup.user.name,
-        user: attendance.user.name,
-        name: meetup.name,
-        date: format(meetup.date, "'dia' dd 'de' MMMM', às' H:mm'h'", {
-          locale: pt,
-        }),
-      },
-    });
+    // await Mail.sendMail({
+    //   to: `${meetup.user.name} <${meetup.user.email}>`,
+    //   subject: 'Uma pessoa vai no teu evento',
+    //   template: 'attendanceConfirmation',
+    //   context: {
+    //     author: meetup.user.name,
+    //     user: attendance.user.name,
+    //     name: meetup.name,
+    //     date: format(meetup.date, "'dia' dd 'de' MMMM', às' H:mm'h'", {
+    //       locale: pt,
+    //     }),
+    //   },
+    // });
 
     return res.json(attendance);
+  }
+
+  async delete(req, res) {
+    const attendance = await Attendance.findByPk(req.params.id);
+
+    if (!attendance) {
+      return res.status(400).json({ error: 'Attendance not found' });
+    }
+
+    if (attendance.user_id !== req.userId) {
+      return res
+        .status(401)
+        .json({ error: 'Only authors can cancel attendances' });
+    }
+
+    if (isBefore(attendance.date, new Date())) {
+      return res
+        .status(401)
+        .json({ error: 'Past attendances cannot be canceled' });
+    }
+
+    await attendance.destroy();
+
+    return res.json({ message: 'Attendance canceled' });
   }
 }
 
