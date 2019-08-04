@@ -14,7 +14,17 @@ class FeedController {
     const maximumDate = endOfDay(parseISO(date));
 
     const meetups = await Meetup.findAll({
-      order: [['date', 'ASC']],
+      where: {
+        date: {
+          [Op.between]: [minimumDate, maximumDate],
+        },
+        user_id: {
+          [Op.not]: req.userId,
+        },
+      },
+      order: [['date', 'ASC'], ['id', 'ASC']],
+      limit: 10,
+      offset: (page - 1) * 10,
       include: [
         {
           model: File,
@@ -36,15 +46,6 @@ class FeedController {
           },
         },
       ],
-      where: {
-        date: {
-          [Op.between]: [minimumDate, maximumDate],
-        },
-        user_id: {
-          [Op.not]: req.userId,
-        },
-      },
-      offset: (page - 1) * 10,
     });
 
     return res.json(meetups);
